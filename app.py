@@ -1,9 +1,10 @@
-from flask import Flask, render_template, request, Response, stream_with_context
+from flask import Flask, render_template, request, Response, stream_with_context, send_from_directory
 import requests
 import json
 import os
 
 app = Flask(__name__)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434")
 MODEL_NAME = os.environ.get("MODEL_NAME", "phi3_financial")
@@ -12,6 +13,27 @@ MODEL_NAME = os.environ.get("MODEL_NAME", "phi3_financial")
 @app.route("/")
 def index():
     return render_template("index.html", model_name=MODEL_NAME)
+
+
+@app.route("/widget")
+def widget():
+    # Compact, embeddable chat UI (no sidebar / history) served inside an iframe.
+    return render_template("widget.html", model_name=MODEL_NAME)
+
+
+@app.route("/demo")
+def demo():
+    # Dummy page demonstrating the embedded floating chatbot.
+    return render_template("demo.html")
+
+
+@app.route("/embed.js")
+def embed_js():
+    # Loader script: drop <script src=".../embed.js"></script> into any page.
+    resp = send_from_directory(os.path.join(BASE_DIR, "static"), "embed.js")
+    resp.headers["Content-Type"] = "application/javascript"
+    resp.headers["Cache-Control"] = "no-cache"
+    return resp
 
 
 @app.route("/chat", methods=["POST"])
