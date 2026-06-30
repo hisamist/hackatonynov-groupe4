@@ -1,2 +1,6 @@
 datasets/dataset_v0.json
 .DS_Store
+
+# Ignore ollama-server/model contents except Modelfile
+ollama-server/model/*
+!ollama-server/model/Modelfile
