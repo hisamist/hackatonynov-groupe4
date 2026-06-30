@@ -176,3 +176,12 @@ techcorp-ai-chat/
 **TechCorp compte sur vous pour finaliser ce projet. Explorez les fichiers laissés par l'équipe précédente, ils peuvent contenir des informations utiles !**
 
 ---
+## ⚙️ Note concernant le test de l'interface
+
+Tant qu'il n'y a pas de serveur Ollama indépendant (sur une machine interne ou une infrastructure dédiée), le projet est lancé via un fichier `docker-compose`. Ce fichier intègre directement le serveur Ollama dans la pile (stack). C'est pourquoi cette option (Docker Compose) est actuellement configurée par défaut. Si un serveur Ollama externe est mis en place par la suite, il suffira de modifier l'adresse dans le fichier `docker-compose.yaml` pour basculer facilement.
+
+De plus, en raison de limites de stockage (les modèles et les jeux de données étant trop volumineux), il n'a pas été possible de tout uploader sur GitHub. L'intégralité du projet est donc fournie sous forme de fichier ZIP. Pour tester l'interface utilisateur avec le serveur, il vous suffit de décompresser ce fichier et de lancer Docker Compose avec la commande :
+
+\`\`\`bash
+docker compose up --build
+\`\`\`
