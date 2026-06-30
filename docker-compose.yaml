@@ -1,0 +1,56 @@
+services:
+ 
+  web:
+    build: .
+    ports:
+      - "5050:5000"
+    environment:
+      OLLAMA_URL: http://ollama:11434
+      MODEL_NAME: phi3_financial
+    depends_on:
+      - ollama
+    networks:
+      - ollama_net
+ 
+  ollama:
+    image: ollama/ollama:0.5.7
+    container_name: ollama
+    restart: unless-stopped
+ 
+    ports:
+      - "11434:11434"
+ 
+    volumes:
+      - ollama:/root/.ollama
+      - ./ollama_server/model:/ollama_server/model
+ 
+    environment:
+      - OLLAMA_HOST=0.0.0.0:11434
+      - OLLAMA_KEEP_ALIVE=24h
+ 
+    networks:
+      - ollama_net
+ 
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+   
+    deploy:
+      resources:
+        limits:
+          memory: 6g
+ 
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+ 
+networks:
+  ollama_net:
+    driver: bridge
+ 
+volumes:
+  ollama:

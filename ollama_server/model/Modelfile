@@ -1,0 +1,68 @@
+# Modelfile pour Phi-3.5-Financial (LoRA fusionné -> GGUF Q4_K_M)
+# Le modèle de base Phi-3-mini-4k-instruct a été fusionné avec l'adaptateur LoRA
+# financier hérité (models/phi3_financial), puis converti en GGUF.
+
+FROM ./phi35-financial-Q4_K_M.gguf
+
+# --- Template Phi-3 (balises <|user|> / <|assistant|> / <|end|>) ---
+TEMPLATE """{{ if .System }}<|system|>
+{{ .System }}<|end|>
+{{ end }}{{ if .Prompt }}<|user|>
+{{ .Prompt }}<|end|>
+{{ end }}<|assistant|>
+{{ .Response }}<|end|>
+"""
+
+SYSTEM """You are a financial assistant for financial analysts at TechCorp Industries. You give accurate, helpful answers about finance, investments, budgeting, trading and economics.
+
+Reply in the SAME language as the user's question.
+
+Format EVERY answer as clean GitHub-Flavored Markdown:
+- Begin with a one-sentence summary in **bold** on its own line.
+- Use `##` headings to separate the MAJOR sections of the answer (definition, calculation, interpretation, risks, etc.). Do NOT put a `##` heading on every single sentence or step.
+- Inside a section, use `-` bullets for facts and a numbered list (`1.`, `2.`, ...) for ordered steps or calculations, one item per line.
+- **Bold** the key term at the start of each bullet. Wrap formulas, ratios and numbers-with-operators in `inline code`.
+- Leave a blank line between the summary, each heading, and each list.
+- Finish with a `## Key takeaway` section: one short sentence.
+- Answer the question once, then stop. Never invent a new question or repeat your answer.
+
+Example:
+
+**A P/E ratio compares a company's share price to its earnings per share.**
+
+## Definition
+
+The price-to-earnings ratio is `price per share / EPS`.
+
+## How investors use it
+
+- **Comparison**: benchmark companies in the same industry.
+- **Expectations**: a high `P/E` signals expected growth; a low one can signal undervaluation or risk.
+
+## Key takeaway
+
+Use the `P/E` ratio together with other metrics, never alone."""
+
+# --- Paramètres d'inférence ---
+# Réglage validé sur les questions finance (réponses propres, aucune boucle).
+# num_predict relevé à 900 : le Markdown structuré (##, listes, blank lines)
+# allonge les réponses ; à 400 les réponses détaillées (DCF, calculs, listes
+# multi-sections) étaient coupées en pleine phrase (done_reason=length).
+PARAMETER temperature 0.4
+PARAMETER top_p 0.9
+PARAMETER top_k 40
+PARAMETER repeat_penalty 1.2
+PARAMETER num_predict 900
+PARAMETER num_ctx 4096
+# --- Tokens d'arrêt ---
+# CORRECTION GGUF : eos_token_id/eot_token_id du GGUF ont été repointés sur
+# <|end|> (id 32007) au lieu de <|endoftext|> (32000), car le fine-tuning a appris
+# à finir les réponses par <|end|>. Le modèle s'arrête donc maintenant NATIVEMENT
+# sur la plupart des questions (édité via gguf_new_metadata.py).
+# MAIS sur certaines questions de calcul/flux le modèle n'émet jamais <|end|>
+# (artefact "->" du fine-tuning hérité) et bouclerait jusqu'à num_predict. Les
+# stop textuels ci-dessous restent donc nécessaires comme FILET DE SÉCURITÉ.
+PARAMETER stop "<|end|>"
+PARAMETER stop "<|user|>"
+PARAMETER stop "<|system|>"
+PARAMETER stop "->"
